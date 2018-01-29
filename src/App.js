@@ -13,12 +13,60 @@ class App extends React.Component {
   state = {
     city: undefined,
     country: undefined,
+    formValueCity: undefined,
+    formValueCountry: undefined,
     temperature: undefined,
     humidity: undefined,
     description: undefined,
     error: undefined
   }
   
+  componentWillMount = () => {
+    this.setLocation();
+  }
+
+  setLocation = () => {
+    
+    if(!!navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        // do_something(position.coords.latitude, position.coords.longitude);
+        let latitude = position.coords.latitude;
+        let longitude = position.coords.longitude;
+
+        // this.getAddress(latitude, longitude).then( (v) => {
+          // this.setState({city: v}, this.getWeatherReport);
+        // });
+
+      });
+    } else {
+        console.log('Location not found!');
+    }
+  }
+
+  getAddress (latitude, longitude) {
+    return new Promise(function (resolve, reject) {
+        var request = new XMLHttpRequest();
+        var method = 'GET';
+        var url = `http://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&sensor=true&language=en`;
+        var async = true;
+
+        request.open(method, url, async);
+        request.onreadystatechange = function () {
+            if (request.readyState == 4) {
+                if (request.status == 200) {
+                    var data = JSON.parse(request.responseText);
+                    var address = data.results[0];
+                    resolve(address.address_components['3'].long_name);
+                }
+                else {
+                    reject(request.status);
+                }
+            }
+        };
+        request.send();
+    });
+  }
+
   getWeather = async (e) => {
     e.preventDefault();
     const city = e.target.elements.city.value;
@@ -58,7 +106,7 @@ class App extends React.Component {
                 <Titles />
               </div>
               <div className="col-xs-5 form-container">
-                <Form getWeather={this.getWeather} />
+                <Form getWeather={this.getWeather} valueCity={this.state.formValueCity} valueCountry={this.state.formValueCountry}/>
                 <Weather 
                   temperature={this.state.temperature}
                   city={this.state.city}
